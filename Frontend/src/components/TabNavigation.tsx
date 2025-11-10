@@ -33,7 +33,7 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
                 isActive ? 'text-white' : 'text-muted-foreground hover:text-foreground'
               }`}
               whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 2 }}
             >
               {isActive && (
                 <motion.div
