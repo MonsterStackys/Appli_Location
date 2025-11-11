@@ -108,7 +108,7 @@ export function StoryViewer({ stories, initialIndex = 0, onClose }: StoryViewerP
             <div className="text-white">
               <p className="text-sm drop-shadow-lg">{currentStory.agencyName}</p>
               <p className="text-xs text-white/80 drop-shadow-lg">
-                {formatDistanceToNow(new Date(currentStory.postedAt), {
+                {formatDistanceToNow(new Date(currentStory.updated_at), {
                   addSuffix: true,
                   locale: fr,
                 })}

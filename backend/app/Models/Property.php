@@ -2,13 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
 class Property extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
+
+    protected $primaryKey = 'id';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
         'user_id', 'title', 'description', 'price', 'location',
@@ -69,6 +74,27 @@ class Property extends Model
             $query->where('price', '<=', $filters['max_price']);
         }
         
+        if (!empty($filters['min_bedrooms'])) {
+            $query->where('bedrooms', '>=', $filters['min_bedrooms']);
+        }
+        
+        if (!empty($filters['min_area'])) {
+            $query->where('area', '>=', $filters['min_area']);
+        }
+        
         return $query;
+    }
+
+    // Scope pour les propriétés actives
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    // Scope pour les recherches par titre
+    public function scopeSearch($query, $search)
+    {
+        return $query->where('title', 'like', '%' . $search . '%')
+                    ->orWhere('description', 'like', '%' . $search . '%');
     }
 }

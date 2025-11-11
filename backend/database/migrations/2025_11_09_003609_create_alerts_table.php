@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('alerts', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->uuid('id')->primary();
+            $table->foreignUuid('user_id')->constrained()->onDelete('cascade');
             $table->string('location');
             $table->string('property_type')->default('all');
             $table->enum('type', ['vente', 'location', 'all'])->default('all');

@@ -22,7 +22,7 @@ export interface TextPost {
   likedByCurrentUser: boolean;
   comments: number;
   views: number;
-  postedAt: string;
+  updated_at: string;
 }
 
 interface TextPostCardProps {
@@ -53,7 +53,7 @@ export function TextPostCard({ post, onLike, onComment, onViewProfile }: TextPos
             <div>
               <p className="text-sm">{post.author.name}</p>
               <p className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(post.postedAt), {
+                {formatDistanceToNow(new Date(post.updated_at), {
                   addSuffix: true,
                   locale: fr,
                 })}

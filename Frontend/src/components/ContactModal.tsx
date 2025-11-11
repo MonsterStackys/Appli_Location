@@ -31,7 +31,7 @@ export function ContactModal({ isOpen, onClose, property }: ContactModalProps) {
         <DialogHeader>
           <DialogTitle>Contacter le vendeur</DialogTitle>
           <DialogDescription>
-            Contactez {property.seller.name} pour en savoir plus sur cette propriété
+            Contactez {property.user.name} pour en savoir plus sur cette propriété
           </DialogDescription>
         </DialogHeader>
 
@@ -43,13 +43,13 @@ export function ContactModal({ isOpen, onClose, property }: ContactModalProps) {
           {/* Seller Info */}
           <div className="flex items-center gap-3 p-4 bg-[#e8f5f0] rounded-lg">
             <Avatar className="w-12 h-12">
-              <AvatarImage src={property.seller.avatar} />
-              <AvatarFallback>{property.seller.name[0]}</AvatarFallback>
+              <AvatarImage src={property.user.avatar} />
+              <AvatarFallback>{property.user.name[0]}</AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">{property.seller.name}</p>
+              <p className="font-medium">{property.user.name}</p>
               <p className="text-sm text-muted-foreground">
-                {property.seller.type === 'agence' ? 'Agence immobilière' : 'Particulier'}
+                {property.user.type === 'agence' ? 'Agence immobilière' : 'Particulier'}
               </p>
             </div>
           </div>
@@ -63,17 +63,17 @@ export function ContactModal({ isOpen, onClose, property }: ContactModalProps) {
 
           {/* Contact Options */}
           <div className="grid gap-2">
-            <a href={`tel:${property.seller.phone}`} className="w-full">
+            <a href={`tel:${property.user.phone}`} className="w-full">
               <Button variant="outline" className="w-full gap-2 justify-start">
                 <Phone className="w-4 h-4 text-[#009E60]" />
-                <span>{property.seller.phone}</span>
+                <span>{property.user.phone}</span>
               </Button>
             </a>
 
-            <a href={`mailto:${property.seller.email}`} className="w-full">
+            <a href={`mailto:${property.user.email}`} className="w-full">
               <Button variant="outline" className="w-full gap-2 justify-start">
                 <Mail className="w-4 h-4 text-[#3A75C4]" />
-                <span>{property.seller.email}</span>
+                <span>{property.user.email}</span>
               </Button>
             </a>
           </div>

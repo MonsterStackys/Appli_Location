@@ -20,6 +20,10 @@ export function PropertyCard({ property, onViewProfile, onContact, onViewDetails
   const [isLiked, setIsLiked] = useState(property.likedByCurrentUser);
   const [likes, setLikes] = useState(property.likes);
 
+  // Vérifier si les images existent et ont le bon format
+  const propertyImages = property.images || [];
+  const mainImage = propertyImages[currentImageIndex]?.path || '/placeholder-image.jpg';
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -48,12 +52,16 @@ export function PropertyCard({ property, onViewProfile, onContact, onViewDetails
 
   const nextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev + 1) % property.images.length);
+    if (propertyImages.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % propertyImages.length);
+    }
   };
 
   const prevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev - 1 + property.images.length) % property.images.length);
+    if (propertyImages.length > 1) {
+      setCurrentImageIndex((prev) => (prev - 1 + propertyImages.length) % propertyImages.length);
+    }
   };
 
   return (
@@ -67,21 +75,21 @@ export function PropertyCard({ property, onViewProfile, onContact, onViewDetails
         <div className="p-4 flex items-center justify-between">
           <div 
             className="flex items-center gap-3 cursor-pointer"
-            onClick={() => onViewProfile(property.seller.id)}
+            onClick={() => onViewProfile(property.user.id)}
           >
             <Avatar>
-              <AvatarImage src={property.seller.avatar} />
-              <AvatarFallback>{property.seller.name[0]}</AvatarFallback>
+              <AvatarImage src={property.user.avatar} alt={property.user.name} />
+              <AvatarFallback>{property.user.name[0]}</AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">{property.seller.name}</p>
+              <p className="font-medium">{property.user.name}</p>
               <div className="flex items-center gap-2">
-                <p className="text-sm text-muted-foreground">{formatDate(property.postedAt)}</p>
+                <p className="text-sm text-muted-foreground">{formatDate(property.updated_at)}</p>
                 <Badge 
                   variant="secondary" 
                   className="text-xs bg-[#009E60] text-white"
                 >
-                  {property.seller.type === 'agence' ? 'Agence' : 'Particulier'}
+                  {property.user.type === 'agence' ? 'Agence' : 'Particulier'}
                 </Badge>
               </div>
             </div>
@@ -108,12 +116,13 @@ export function PropertyCard({ property, onViewProfile, onContact, onViewDetails
         {/* Image Gallery */}
         <div className="relative bg-black group cursor-pointer" onClick={() => onViewDetails(property.id)}>
           <ImageWithFallback
-            src={property.images[currentImageIndex]}
+            src={mainImage}
             alt={property.title}
             className="w-full h-96 object-cover"
+            // fallbackSrc="/placeholder-image.jpg"
           />
           
-          {property.images.length > 1 && (
+          {propertyImages.length > 1 && (
             <>
               <button
                 onClick={prevImage}
@@ -134,7 +143,7 @@ export function PropertyCard({ property, onViewProfile, onContact, onViewDetails
                 </svg>
               </button>
               <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                {property.images.map((_, index) => (
+                {propertyImages.map((_, index) => (
                   <div
                     key={index}
                     className={`w-2 h-2 rounded-full ${
@@ -173,8 +182,10 @@ export function PropertyCard({ property, onViewProfile, onContact, onViewDetails
           <p className="text-muted-foreground mb-3 line-clamp-2">{property.description}</p>
           
           <div className="flex items-center justify-between">
-            <span className="text-[#009E60]">{formatPrice(property.price)}</span>
-            <Badge variant="outline">{property.propertyType}</Badge>
+            <span className="text-[#009E60] font-semibold text-lg">
+              {formatPrice(property.price)}
+            </span>
+            <Badge variant="outline">{property.property_type}</Badge>
           </div>
         </div>
 

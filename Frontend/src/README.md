@@ -195,7 +195,7 @@ interface Property {
   area: number;
   images: string[];
   description: string;
-  seller: {
+  user: {
     id: string;
     name: string;
     type: 'particulier' | 'agence';
@@ -205,7 +205,7 @@ interface Property {
   };
   likes: number;
   likedByCurrentUser: boolean;
-  postedAt: string;
+  updated_at: string;
 }
 
 interface User {
@@ -228,7 +228,7 @@ interface Story {
   image: string;
   title: string;
   description: string;
-  postedAt: string;
+  updated_at: string;
   viewed: boolean;
 }
 ```
