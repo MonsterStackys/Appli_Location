@@ -6,14 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('properties', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->uuid('id')->primary();
+            
+            $table->foreignUuid('user_id')->constrained()->onDelete('cascade');
+            
             $table->string('title');
             $table->text('description');
             $table->decimal('price', 15, 2);
@@ -26,12 +25,14 @@ return new class extends Migration
             $table->integer('likes')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+
+            // Index pour les performances
+            $table->index(['type', 'property_type']);
+            $table->index(['price']);
+            $table->index(['location']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('properties');

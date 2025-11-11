@@ -6,11 +6,14 @@ import { Label } from './ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { motion } from 'motion/react';
 import { Mail, Lock, User, Phone } from 'lucide-react';
+import { authService } from '../lib/services/authService';
+import { toast } from 'sonner';
+
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAuthenticate: () => void;
+  onAuthenticate: (user: any) => void;
 }
 
 export function AuthModal({ isOpen, onClose, onAuthenticate }: AuthModalProps) {
@@ -21,15 +24,28 @@ export function AuthModal({ isOpen, onClose, onAuthenticate }: AuthModalProps) {
   const [signupPhone, setSignupPhone] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    onAuthenticate();
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+  
+  const formData = new FormData(event.currentTarget);
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
+
+  try {
+    const data = await authService.login(email, password);
+    onAuthenticate(data.user);
+    toast.success('Connexion réussie !');
     onClose();
-  };
+  } catch (error) {
+    console.error('Login error:', error);
+    toast.error('Identifiants invalides');
+  }
+};
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    onAuthenticate();
+    console.log("inscription");
+    
     onClose();
   };
 
@@ -72,6 +88,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticate }: AuthModalProps) {
                     type="email"
                     placeholder="votre@email.ga"
                     className="pl-10"
+                    name='email'
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     required
@@ -88,6 +105,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticate }: AuthModalProps) {
                     type="password"
                     placeholder="••••••••"
                     className="pl-10"
+                    name='password'
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required

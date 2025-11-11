@@ -19,7 +19,7 @@ export function ProfilePage({ userId, onEditClick }: ProfilePageProps) {
     : currentUser;
   
   const userProperties = mockProperties.filter(p => 
-    p.seller.id === (isOwnProfile ? currentUser.id : userId)
+    p.user.id === (isOwnProfile ? currentUser.id : userId)
   ).slice(0, 3);
 
   const handleWhatsAppContact = () => {

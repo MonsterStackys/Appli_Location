@@ -107,7 +107,7 @@ export function AgencyStories({ stories }: AgencyStoriesProps) {
                     <div>
                       <p className="text-white text-sm">{selectedStory.agencyName}</p>
                       <p className="text-white/80 text-xs">
-                        {new Date(selectedStory.postedAt).toLocaleDateString('fr-FR')}
+                        {new Date(selectedStory.updated_at).toLocaleDateString('fr-FR')}
                       </p>
                     </div>
                   </div>
