@@ -10,25 +10,43 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { motion } from "motion/react";
-import { currentUser } from "../lib/mockData";
 import { AlertsModal } from "./AlertsModal";
 import { useState } from "react";
+import * as mockData from "../lib/mockData"
+import { useAuth } from "../contexts/AuthContext";
 
 interface NavbarProps {
   onShowAuthModal: () => void;
-  isAuthenticated: boolean;
   onNavigate: (page: string) => void;
   onLogout?: () => void;
 }
 
 export function Navbar({
   onShowAuthModal,
-  isAuthenticated,
   onNavigate,
   onLogout,
 }: NavbarProps) {
   const [showAlertsModal, setShowAlertsModal] = useState(false);
+  const { user: currentUser, isAuthenticated, logout } = useAuth();
 
+  // Utilisez directement currentUser si disponible, sinon mockData
+  const displayUser = currentUser ?? mockData.currentUser;
+
+  // Gestion améliorée de la déconnexion
+  const handleLogout = async () => {
+    console.log("✅ Déconnexion !");
+    try {
+      await logout(); // Appel du hook useAuth
+      onLogout?.(); // Appel optionnel de la prop parent
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+    }
+  };
+
+  // Obtenir l'initiale du nom
+  const getInitial = (name: string) => {
+    return name.charAt(0).toUpperCase();
+  };
 
   return (
     <motion.nav
@@ -104,7 +122,6 @@ export function Navbar({
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 className="hidden md:block"
-                
               >
                 <Button
                   variant="ghost"
@@ -127,11 +144,12 @@ export function Navbar({
               >
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    
                     <div className="hover:bg-gray-100 rounded-xl transition-all p-1.5 cursor-pointer">
                       <Avatar className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 ring-2 ring-[#009E60]/20 cursor-pointer">
-                        <AvatarImage src={currentUser.avatar} />
-                        <AvatarFallback>U</AvatarFallback>
+                        <AvatarImage src={displayUser.avatar} />
+                        <AvatarFallback>
+                          {getInitial(displayUser.name)}
+                        </AvatarFallback>
                       </Avatar>
                     </div>
                   </DropdownMenuTrigger>
@@ -140,39 +158,35 @@ export function Navbar({
                     <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
                     <DropdownMenuSeparator />
 
-                    
-                    <div
-                      className="flex items-center px-2 py-1.5 text-sm rounded-sm cursor-pointer hover:bg-accent transition-colors select-none"
-                      onClick={() => {
-                        onNavigate("profile");
-                      }}
+                    <DropdownMenuItem 
+                      onClick={() => onNavigate("profile")}
+                      className="cursor-pointer"
                     >
                       <Avatar className="w-8 h-8 mr-2">
-                        <AvatarImage src={currentUser.avatar} />
-                        <AvatarFallback>U</AvatarFallback>
+                        <AvatarImage src={displayUser.avatar} />
+                        <AvatarFallback>
+                          {getInitial(displayUser.name)}
+                        </AvatarFallback>
                       </Avatar>
                       <div>
                         <p className="text-sm font-medium">
-                          {currentUser.name}
+                          {displayUser.name}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Voir le profil
                         </p>
                       </div>
-                    </div>
+                    </DropdownMenuItem>
 
                     <DropdownMenuSeparator />
 
-                    <div
-                      className="flex items-center px-2 py-1.5 text-sm rounded-sm cursor-pointer hover:bg-accent transition-colors text-red-600 select-none"
-                      onClick={() => {
-                        console.log("✅ Déconnexion !");
-                        onLogout?.();
-                      }}
+                    <DropdownMenuItem 
+                      onClick={handleLogout}
+                      className="cursor-pointer text-red-600 focus:text-red-600"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
                       Se déconnecter
-                    </div>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </motion.div>
@@ -190,12 +204,10 @@ export function Navbar({
         </div>
       </div>
 
-          <AlertsModal
+      <AlertsModal
         isOpen={showAlertsModal}
         onClose={() => setShowAlertsModal(false)}
       />
-
     </motion.nav>
-
   );
 }
