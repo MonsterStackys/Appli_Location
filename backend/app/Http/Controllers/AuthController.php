@@ -10,7 +10,8 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
     public function register(Request $request)
-    {
+{
+    try {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -19,6 +20,9 @@ class AuthController extends Controller
             'whatsapp' => 'nullable|string|max:20',
             'type' => 'required|in:particulier,agence',
             'description' => 'nullable|string',
+        ], [
+            'email.unique' => 'Cet email est déjà utilisé',
+            'password.confirmed' => 'Les mots de passe ne correspondent pas',
         ]);
 
         $user = User::create([
@@ -29,10 +33,21 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
+            'success' => true,
+            'message' => "Compte créé avec succès",
             'user' => $user,
             'token' => $token,
         ], 201);
+
+    } catch (ValidationException $e) {
+        // FORCER la réponse JSON même en cas de redirection
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur de validation',
+            'errors' => $e->errors(),
+        ], 422);
     }
+}
 
     public function login(Request $request)
     {

@@ -4,7 +4,7 @@ import { Sidebar } from "./components/Sidebar";
 import { PropertyCard } from "./components/PropertyCard";
 import { AuthModal } from "./components/AuthModal";
 import { ContactModal } from "./components/ContactModal";
-import { FilterBar } from "./components/FilterBar";
+import { ActiveFilter, FilterBar } from "./components/FilterBar";
 import { ProfilePage } from "./components/ProfilePage";
 import { AddPropertyForm } from "./components/AddPropertyForm";
 import { TabNavigation } from "./components/TabNavigation";
@@ -16,7 +16,6 @@ import { AlertsModal } from "./components/AlertsModal";
 import { BuildingLoader } from "./components/BuildingLoader";
 import { EditProfileModal } from "./components/EditProfileModal";
 import { MobileStories } from "./components/MobileStories";
-import { TextPostCard, TextPost } from "./components/TextPostCard";
 import { Property, mockStories } from "./lib/mockData";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
@@ -33,11 +32,14 @@ import { motion, AnimatePresence } from "motion/react";
 import { Heart, Users, Sparkles, Bell } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { propertyService } from "./lib/services/propertyService";
+import { useAuth } from "./contexts/AuthContext";
+
+
 
 const ITEMS_PER_PAGE = 5;
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, isAuthenticated, isLoading: authLoading, login, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showAlertsModal, setShowAlertsModal] = useState(false);
@@ -50,13 +52,15 @@ export default function App() {
   const [allProperties, setAllProperties] = useState<Property[]>([]); // Toutes les propriétés originales
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]); // Propriétés filtrées
   const [searchActive, setSearchActive] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [currentPageNumber, setCurrentPageNumber] = useState(1);
   const [selectedSellerId, setSelectedSellerId] = useState<
     string | undefined
   >();
-  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   const [filters, setFilters] = useState({
     type: "all",
     propertyType: "all",
@@ -91,8 +95,65 @@ export default function App() {
     }
   };
 
+  const handleFilterSelect = (
+    filterType: string,
+    value: string,
+    label: string
+  ) => {
+    if (value === "all") {
+      // Supprimer le filtre de ce type
+      setActiveFilters((prev) => prev.filter((f) => f.type !== filterType));
+    } else {
+      // Ajouter ou mettre à jour le filtre
+      setActiveFilters((prev) => {
+        const filtered = prev.filter((f) => f.type !== filterType);
+        return [...filtered, { type: filterType, value, label }];
+      });
+    }
+  };
+
+  // Fonction pour supprimer un filtre spécifique
+  const removeFilter = (filterType: string) => {
+    setActiveFilters((prev) => prev.filter((f) => f.type !== filterType));
+
+    // Mettre à jour les états correspondants
+    switch (filterType) {
+      case "search":
+        setSearchQuery("");
+        break;
+      case "transaction":
+        setActiveTab("accueil");
+        break;
+      case "category":
+        setSelectedCategory("all");
+        setFilters((prev) => ({ ...prev, propertyType: "all" })); // Reset aussi propertyType
+        break;
+      case "type":
+        setFilters((prev) => ({ ...prev, type: "all" }));
+        break;
+      case "propertyType":
+        setFilters((prev) => ({ ...prev, propertyType: "all" }));
+        setSelectedCategory("all"); // Reset aussi la catégorie
+        break;
+      case "location":
+        setFilters((prev) => ({ ...prev, location: "all" }));
+        break;
+      case "price":
+        setFilters((prev) => ({ ...prev, priceRange: "all" }));
+        break;
+    }
+  };
+
+  const clearAllFilters = () => {
+    setActiveFilters([]);
+    resetFilters();
+  };
+
   const applyFilters = () => {
     let filtered = [...allProperties];
+
+    // Réinitialiser les filtres actifs au début
+    setActiveFilters([]);
 
     // Filtre par recherche
     if (searchQuery) {
@@ -102,33 +163,68 @@ export default function App() {
           p.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
           p.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
+
+      // Ajouter le filtre de recherche aux filtres actifs
+      handleFilterSelect("search", searchQuery, `Recherche: "${searchQuery}"`);
     }
 
     // Filtre par tab (accueil, ventes, locations)
     if (activeTab === "ventes") {
       filtered = filtered.filter((p) => p.type === "vente");
+      handleFilterSelect("transaction", "vente", "Ventes uniquement");
     } else if (activeTab === "locations") {
       filtered = filtered.filter((p) => p.type === "location");
+      handleFilterSelect("transaction", "location", "Locations uniquement");
     }
 
-    // Filtre par catégorie
+    // Filtre par catégorie (MAISON, PARCELLE, etc.)
     if (selectedCategory !== "all") {
       filtered = filtered.filter((p) => p.property_type === selectedCategory);
+      const categoryLabels: { [key: string]: string } = {
+        appartement: "Appartements",
+        maison: "Maisons",
+        terrain: "Terrains",
+        villa: "Villas",
+        commercial: "Commerces",
+      };
+      handleFilterSelect(
+        "category",
+        selectedCategory,
+        categoryLabels[selectedCategory] || selectedCategory
+      );
     }
 
-    // Filtres supplémentaires
+    // Filtres supplémentaires (uniquement s'ils sont différents de "all")
     if (filters.type !== "all") {
       filtered = filtered.filter((p) => p.type === filters.type);
+      handleFilterSelect("type", filters.type, `Transaction: ${filters.type}`);
     }
 
     if (filters.propertyType !== "all") {
       filtered = filtered.filter(
         (p) => p.property_type === filters.propertyType
       );
+      const typeLabels: { [key: string]: string } = {
+        appartement: "Appartement",
+        maison: "Maison",
+        terrain: "Terrain",
+        villa: "Villa",
+        commercial: "Local commercial",
+      };
+      handleFilterSelect(
+        "propertyType",
+        filters.propertyType,
+        typeLabels[filters.propertyType] || filters.propertyType
+      );
     }
 
     if (filters.location !== "all") {
       filtered = filtered.filter((p) => p.location.includes(filters.location));
+      handleFilterSelect(
+        "location",
+        filters.location,
+        `Localisation: ${filters.location}`
+      );
     }
 
     if (filters.priceRange !== "all") {
@@ -138,14 +234,27 @@ export default function App() {
       filtered = filtered.filter(
         (p) => p.price >= min && p.price <= (max || Infinity)
       );
+
+      const priceLabels: { [key: string]: string } = {
+        "0-50000000": "Moins de 50M",
+        "50000000-100000000": "50M - 100M",
+        "100000000-200000000": "100M - 200M",
+        "200000000-500000000": "200M - 500M",
+        "500000000+": "Plus de 500M",
+      };
+      handleFilterSelect(
+        "price",
+        filters.priceRange,
+        priceLabels[filters.priceRange] || `Prix: ${filters.priceRange}`
+      );
     }
 
     setFilteredProperties(filtered);
-    setCurrentPageNumber(1); // Reset à la première page après filtrage
+    setCurrentPageNumber(1);
   };
 
-  const handleAuthenticate = () => {
-    setIsAuthenticated(true);
+  const handleAuthenticate = (userData: any) => {
+    login(userData, userData.token);
     toast.success("Connexion réussie !", {
       description: "Bienvenue sur GabonImmo",
     });
@@ -153,13 +262,19 @@ export default function App() {
 
   const handleLogout = () => {
     setIsLoading(true);
-    setTimeout(() => {
-      setIsAuthenticated(false);
-      setCurrentPage("home");
-      setIsLoading(false);
-      toast.success("Déconnexion réussie", {
-        description: "À bientôt !",
-      });
+    setTimeout(async () => {
+      try {
+        await logout();
+        setCurrentPage("home");
+        toast.success("Déconnexion réussie", {
+          description: "À bientôt !",
+        });
+      } catch (error) {
+        console.error("Logout error:", error);
+        toast.error("Erreur lors de la déconnexion");
+      } finally {
+        setIsLoading(false);
+      }
     }, 1000);
   };
 
@@ -211,11 +326,15 @@ export default function App() {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    setSelectedCategory("all"); // Reset category quand on change d'onglet
+    setSelectedCategory("all");
+    // Réinitialiser le type dans filters pour éviter les conflits
+    setFilters((prev) => ({ ...prev, type: "all" }));
   };
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
+    // Réinitialiser propertyType dans filters pour éviter les conflits
+    setFilters((prev) => ({ ...prev, propertyType: "all" }));
   };
 
   const resetFilters = () => {
@@ -228,6 +347,7 @@ export default function App() {
     });
     setSelectedCategory("all");
     setActiveTab("accueil");
+    setActiveFilters([]);
   };
 
   // Pagination logic - utiliser filteredProperties
@@ -238,6 +358,15 @@ export default function App() {
   }, [filteredProperties, currentPageNumber]);
 
   const totalPages = Math.ceil(filteredProperties.length / ITEMS_PER_PAGE);
+
+  // Afficher un loader pendant le chargement initial de l'authentification
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#f0f2f5] flex items-center justify-center">
+        <BuildingLoader />
+      </div>
+    );
+  }
 
   const renderTabContent = () => {
     if (activeTab === "communaute") {
@@ -320,44 +449,11 @@ export default function App() {
           onCategoryChange={handleCategoryChange}
         />
 
-        {/* Indicateur de recherche/filtres actifs
-        {(searchQuery ||
-          filters.type !== "all" ||
-          filters.propertyType !== "all" ||
-          selectedCategory !== "all") && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-blue-800">
-                <span>Filtres actifs:</span>
-                {searchQuery && (
-                  <span className="bg-blue-100 px-2 py-1 rounded">
-                    Recherche: "{searchQuery}"
-                  </span>
-                )}
-                {filters.type !== "all" && (
-                  <span className="bg-blue-100 px-2 py-1 rounded">
-                    Type: {filters.type}
-                  </span>
-                )}
-                {selectedCategory !== "all" && (
-                  <span className="bg-blue-100 px-2 py-1 rounded">
-                    Catégorie: {selectedCategory}
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={resetFilters}
-                className="text-blue-600 hover:text-blue-800 text-sm underline"
-              >
-                Effacer tout
-              </button>
-            </div>
-          </motion.div>
-        )} */}
+        <FilterBar
+          activeFilters={activeFilters}
+          onRemoveFilter={removeFilter}
+          onClearAllFilters={clearAllFilters}
+        />
 
         {/* Résultats */}
         {filteredProperties.length === 0 ? (
@@ -569,11 +665,19 @@ export default function App() {
     }
   };
 
+  // Afficher un loader pendant le chargement initial
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#f0f2f5] flex items-center justify-center">
+        <BuildingLoader />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f0f2f5]">
       <Navbar
         onShowAuthModal={() => setShowAuthModal(true)}
-        isAuthenticated={isAuthenticated}
         onNavigate={handleNavigate}
         onLogout={handleLogout}
       />
