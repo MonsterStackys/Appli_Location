@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Alert;
 use App\Models\User;
 use App\Models\Property;
 use App\Models\PropertyImage;
@@ -16,10 +17,10 @@ class DatabaseSeeder extends Seeder
     {
         // Créer les utilisateurs
         $users = $this->createUsers();
-        
+
         // Créer les propriétés
         $properties = $this->createProperties($users);
-        
+
         // Créer les favoris
         $this->createFavorites($users, $properties);
     }
@@ -242,7 +243,7 @@ class DatabaseSeeder extends Seeder
 
         // Utilisateur demo aime certaines propriétés
         $demoUser = $users['demo@gabonimmo.ga'];
-        
+
         // Favoris prédéfinis pour l'utilisateur demo
         $demoFavorites = [
             ['user' => $demoUser, 'property' => $properties[1]], // Appartement de luxe
@@ -282,6 +283,31 @@ class DatabaseSeeder extends Seeder
             }
 
             $attempts++;
+        }
+    }
+
+    private function createAlerts(){
+        $users = User::all();
+
+        $locations = ['Libreville', 'Owendo', 'Port-Gentil', 'Other'];
+        $property_types = ['Maison', 'Appartement', 'Villa', 'Terrain', 'Bureau'];
+
+        foreach ($users as $user) {
+            // Générer entre 1 et 3 alertes par utilisateur
+            $alertsCount = rand(1, 3);
+
+            for ($i = 0; $i < $alertsCount; $i++) {
+                Alert::create([
+                    'id' => (string) Str::uuid(),
+                    'user_id' => $user->id,
+                    'location' => $locations[array_rand($locations)],
+                    'property_type' => $property_types[array_rand($property_types)],
+                    'type' => ['vente', 'location', 'all'][array_rand(['vente', 'location', 'all'])],
+                    'max_price' => rand(50000, 1000000),
+                    'min_area' => rand(20, 500),
+                    'is_active' => (bool) rand(0, 1),
+                ]);
+            }
         }
     }
 }

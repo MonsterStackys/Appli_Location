@@ -39,8 +39,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/stories/{id}/view', [StoryController::class, 'markAsViewed']); // A faire
 
     // Alerts
-    Route::get('/alerts', [AlertController::class, 'index']); // A faire
-    Route::post('/alerts', [AlertController::class, 'store']); // A faire
-    Route::delete('/alerts/{id}', [AlertController::class, 'destroy']); // A faire
+    Route::get('/alerts', [AlertController::class, 'index']);
+    Route::post('/alerts', [AlertController::class, 'store']);
+    Route::delete('/alerts/{id}', [AlertController::class, 'destroy']);
 
 });
