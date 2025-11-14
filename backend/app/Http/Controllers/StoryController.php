@@ -9,8 +9,12 @@ class StoryController extends Controller
     public function index(Request $request)
     {
         $now = Carbon::now();
+        
+        Story::where('expires_at', '<', $now)->delete();
+
         $deleteCount = Story::where('expires_at', '<', $now)->delete();
         $activeStories = Story::where('expires_at', '>=', $now)
+                        ->with('user')
                         ->latest()
                         ->get();
         return response()->json([
